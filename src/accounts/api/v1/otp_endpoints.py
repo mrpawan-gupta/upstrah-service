@@ -24,7 +24,7 @@ from common.api.response import APIResponse
 from common.auth.jwt.token_user import TokenUser
 from common.auth.permissions import require_superuser
 
-router = APIRouter(tags=["otps"])
+router = APIRouter()
 
 
 @router.post("/otps", response_model=APIResponse)

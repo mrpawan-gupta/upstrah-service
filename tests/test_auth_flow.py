@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from upstrah.api import create_fastapi_app
+from upstrah.asgi import get_application
 
 PHONE = "+15049684139"
 BASE = "/accounts/api/v1"
@@ -20,7 +20,7 @@ BASE = "/accounts/api/v1"
 @pytest.fixture
 def client() -> TestClient:
     """Return a ``TestClient`` wrapping a fresh FastAPI app."""
-    return TestClient(create_fastapi_app())
+    return TestClient(get_application())
 
 
 @pytest.fixture(autouse=True)

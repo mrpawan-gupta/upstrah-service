@@ -24,6 +24,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "phonenumber_field",
     "accounts",
+    "academies",
+    "athletes",
+    "teams",
+    "training",
+    "scouting",
+    "feed",
+    "chat",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -83,7 +91,7 @@ PHONENUMBER_DEFAULT_FORMAT = "E164"
 # ---------------------------------------------------------------------------
 # Length of generated OTP codes; OTP_VALID_DURATION is read by the model and
 # OTP_EXPIRE_SECONDS by the cache-backed handler — keep them in sync.
-OTP_LENGTH = int(os.environ.get("OTP_LENGTH", "4"))
+OTP_LENGTH = int(os.environ.get("OTP_LENGTH", "6"))
 OTP_VALID_DURATION = int(os.environ.get("OTP_VALID_DURATION", "600"))
 OTP_EXPIRE_SECONDS = OTP_VALID_DURATION
 OTP_RATE_LIMIT_MAX = int(os.environ.get("OTP_RATE_LIMIT_MAX", "5"))

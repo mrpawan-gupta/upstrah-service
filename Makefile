@@ -14,7 +14,7 @@ clean: clean-containers clean-images
 # ─── Local dev ───────────────────────────────────────────────────────────────
 
 run:
-	cd src && uvicorn upstrah.asgi:app --reload --host 127.0.0.1 --port 8002
+	cd src && uvicorn upstrah.asgi:app --reload --host 127.0.0.1 --port 8000
 
 celery-worker:
 	cd src && celery -A upstrah worker -l info --pool=prefork --concurrency=4

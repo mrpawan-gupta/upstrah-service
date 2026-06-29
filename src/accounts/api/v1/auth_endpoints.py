@@ -31,7 +31,7 @@ from common.api.response import APIResponse
 from common.auth.dependencies import get_current_user
 from common.auth.jwt.token_user import TokenUser
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth")
 
 
 @router.post("/otp/send", response_model=APIResponse)

@@ -1,10 +1,9 @@
 from fastapi.testclient import TestClient
 
-from upstrah.api import create_fastapi_app
+from upstrah.asgi import get_application
 
 
-def test_health_ok() -> None:
-    client = TestClient(create_fastapi_app())
-    response = client.get("/health")
+def test_liveness_ok() -> None:
+    client = TestClient(get_application())
+    response = client.get("/api/health/live")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}

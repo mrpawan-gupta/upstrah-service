@@ -9,5 +9,5 @@ from fastapi import APIRouter
 
 from accounts.api.v1.router import router as v1_router
 
-router = APIRouter(prefix="/accounts")
+router = APIRouter(prefix="/accounts", tags=["accounts"])
 router.include_router(v1_router)

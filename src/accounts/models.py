@@ -175,7 +175,7 @@ class OTP(TimeStampModel):
             ``timezone.now()``.
     """
 
-    otp = models.CharField(max_length=4, null=True, verbose_name=_("OTP code"))
+    otp = models.CharField(max_length=6, null=True, verbose_name=_("OTP code"))
     phone = PhoneNumberField(
         unique=True, null=True, blank=True, verbose_name=_("Phone")
     )

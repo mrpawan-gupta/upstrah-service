@@ -25,7 +25,7 @@ from common.auth.dependencies import get_current_user
 from common.auth.jwt.token_user import TokenUser
 from common.exceptions.exceptions import PermissionDeniedError
 
-router = APIRouter(tags=["user-profiles"])
+router = APIRouter()
 
 
 def _assert_can_access(caller: TokenUser, user_id: int) -> None:
