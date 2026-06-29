@@ -1,0 +1,108 @@
+# Version Control
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# static and media file
+static/
+src/static/
+media/
+src/media/
+
+# Development & Testing
+tests/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+coverage.json
+.bandit
+.codespellrc
+.yamllint
+.markdownlint.json
+.pre-commit-config.yaml
+.editorconfig
+
+# Docs & AI tooling (not needed in the image)
+*.md
+.claude/
+.claude-flow/
+.claude-squad/
+.mcp.json
+
+# Python - Bytecode & Cache
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python - Virtual Environments & Dependencies
+venv/
+env/
+ENV/
+.venv
+.env/
+*.egg
+*.egg-info/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment Variables (secrets)
+.env
+.env*
+.env.*
+*.local
+!.env.example
+*secrets*
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build & Distribution
+build/
+dist/
+*.deb
+.coverage
+htmlcov/
+
+# Temporary Files
+*.log
+*.tmp
+*.bak
+*.pid
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Cloud Platform Files
+.gcloudignore
+.firebaseignore
+
+# Database & Data
+*databases*
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker build context
+# Note: Dockerfile should be included in build context
+.dockerignore

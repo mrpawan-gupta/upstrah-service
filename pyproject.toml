@@ -1,0 +1,45 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["**/migrations/**"]
+
+[tool.ruff.lint]
+# Conventions aligned with rudra-service (the reference Rama service).
+select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM", "DJ"]
+ignore = ["E501", "B008", "B904", "DJ001", "ARG001", "ARG002", "SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-export modules legitimately import-without-use.
+"__init__.py" = ["F401"]
+# Django split settings rely on star imports from base.
+"**/settings/*.py" = ["F403", "F405"]
+# Test fixtures/params are often unused by signature.
+"**/test_*.py" = ["ARG001", "ARG002"]
+# ASGI must initialize Django before importing app modules.
+"src/upstrah/asgi.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["upstrah", "accounts", "common"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+plugins = ["mypy_django_plugin.main"]
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+exclude = ['migrations/']
+
+[[tool.mypy.overrides]]
+module = ["*.migrations.*"]
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "upstrah.settings.dev"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "upstrah.settings.dev"
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"

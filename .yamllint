@@ -1,0 +1,63 @@
+---
+# yamllint configuration
+# https://yamllint.readthedocs.io/
+
+extends: default
+
+rules:
+  line-length:
+    max: 88
+    level: warning
+
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  comments:
+    min-spaces-from-content: 2
+    require-starting-space: true
+
+  comments-indentation: {}
+
+  document-start:
+    present: false
+
+  document-end: disable
+
+  truthy: disable
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+
+  colons:
+    max-spaces-after: 1
+
+  commas:
+    max-spaces-after: 1
+
+  empty-lines:
+    max: 2
+
+  empty-values: disable
+
+  key-duplicates: {}
+
+  key-ordering: disable
+
+  new-line-at-end-of-file: {}
+
+  new-lines:
+    type: unix
+
+  quoted-strings: disable
+
+ignore: |
+  /node_modules/
+  /.venv/
+  /venv/
+  /.git/

@@ -1,0 +1,9 @@
+# Codespell configuration file
+# https://github.com/codespell-project/codespell
+
+[codespell]
+# Skip these file patterns
+skip = *.pyc,node_modules,migrations,*.egg-info,.git,.venv,venv,.pytest_cache,.mypy_cache,.coverage,htmlcov,*.lock,nbs
+
+# Ignore words (useful for technical terms that might be flagged)
+ignore-words-list = delt,exis,perview,te,devider,allo,acount,afirst,alast,acreate,aget,asave,adelete,aupdate,aexists,aiterator,aadd
