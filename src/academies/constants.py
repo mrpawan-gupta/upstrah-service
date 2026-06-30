@@ -32,11 +32,14 @@ class RegistrationType(models.TextChoices):
 class MembershipRole(models.TextChoices):
     """Role a member holds within an academy."""
 
-    HEAD = "head", _("Head")
-    COACH = "coach", _("Coach")
-    ADMIN = "admin", _("Admin")
-    STAFF = "staff", _("Staff")
     ATHLETE = "athlete", _("Athlete")
+    COACH = "coach", _("Coach")
+    ACADEMY_ADMIN = "academy_admin", _("Academy Admin")
+    ACADEMY_HEAD = "academy_head", _("Academy Head")
+    ACADEMY_STAFF = "academy_staff", _("Academy Staff")
+    SPECTATOR = "spectator", _("Spectator / Enthusiast")
+    PARENT_GUARDIAN = "parent_guardian", _("Parent / Guardian")
+    SCOUT_RECRUITER = "scout_recruiter", _("Scout / Recruiter")
 
 
 class MembershipStatus(models.TextChoices):
