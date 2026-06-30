@@ -3,9 +3,10 @@
 Inherits the shared CRUD facade from :class:`common.api.BaseUseCase` and
 overrides ``get`` / ``create`` / ``update`` / ``partial_update`` /
 ``delete`` / ``list`` to call the repository and map raw ORM rows into
-``AcademyEntity`` via :class:`AcademyMapper`, so the presentation layer
-works in domain terms only. ``partial_update`` drops unset (``None``)
-fields so a PATCH never overwrites with nulls.
+``AcademyEntity`` via :class:`AcademyMapper`. On create/update the supplied
+``sport_ids`` are validated to exist before the M2M is set (a missing id
+raises :class:`ResourceNotFoundError`). ``partial_update`` drops unset
+(``None``) fields so a PATCH never overwrites with nulls.
 """
 
 from __future__ import annotations
@@ -40,23 +41,51 @@ class AcademyUseCases(BaseUseCase):
             raise ResourceNotFoundError(f"Academy {academy_id} not found")
         return row
 
+    async def _validate_sport_ids(self, sport_ids: list[int]) -> None:
+        """Raise ``ResourceNotFoundError`` if any sport id does not exist."""
+        if not sport_ids:
+            return
+        existing = await self._repository.existing_sport_ids(sport_ids)
+        missing = [sid for sid in sport_ids if sid not in existing]
+        if missing:
+            raise ResourceNotFoundError(
+                f"Sport(s) not found: {', '.join(str(m) for m in missing)}"
+            )
+
     async def create(self, dto: AcademyCreateDTO) -> AcademyEntity:
-        """Create an academy owned by ``dto.created_by``.
+        """Create an academy owned by ``dto.created_by`` and set its sports.
 
         Args:
-            dto: ``AcademyCreateDTO`` with the academy fields and owner.
+            dto: ``AcademyCreateDTO`` with the academy fields, owner, and
+                ``sport_ids``.
 
         Returns:
             The created ``AcademyEntity``.
+
+        Raises:
+            ResourceNotFoundError: One of ``dto.sport_ids`` does not exist.
         """
+        await self._validate_sport_ids(dto.sport_ids)
         row = await self._repository.create(
             name=dto.name,
-            sport=dto.sport,
             description=dto.description,
             city=dto.city,
             status=dto.status,
+            legal_name=dto.legal_name,
+            address=dto.address,
+            email=dto.email,
+            phone=dto.phone,
+            registration_type=dto.registration_type,
+            gst_number=dto.gst_number,
+            website=dto.website,
+            social_links=dto.social_links,
+            athlete_count=dto.athlete_count,
+            coach_count=dto.coach_count,
+            primary_contact_name=dto.primary_contact_name,
+            primary_contact_phone=dto.primary_contact_phone,
             created_by_id=dto.created_by,
         )
+        row = await self._repository.set_sports(row.id, dto.sport_ids)
         return AcademyMapper.orm_to_entity(row)
 
     async def get(self, academy_id: int) -> AcademyEntity:
@@ -75,7 +104,7 @@ class AcademyUseCases(BaseUseCase):
         return AcademyMapper.orm_to_entity(row)
 
     async def update(self, academy_id: int, dto: AcademyUpdateDTO) -> AcademyEntity:
-        """Full replace (PUT) of an academy.
+        """Full replace (PUT) of an academy, including its sports.
 
         Args:
             academy_id: Primary key of the academy.
@@ -85,23 +114,38 @@ class AcademyUseCases(BaseUseCase):
             The updated ``AcademyEntity``.
 
         Raises:
-            ResourceNotFoundError: No academy exists for ``academy_id``.
+            ResourceNotFoundError: No academy exists, or a sport id is missing.
         """
         await self._get_or_raise(academy_id)
-        row = await self._repository.update(
+        await self._validate_sport_ids(dto.sport_ids)
+        await self._repository.update(
             academy_id,
             name=dto.name,
-            sport=dto.sport,
             description=dto.description,
             city=dto.city,
             status=dto.status,
+            legal_name=dto.legal_name,
+            address=dto.address,
+            email=dto.email,
+            phone=dto.phone,
+            registration_type=dto.registration_type,
+            gst_number=dto.gst_number,
+            website=dto.website,
+            social_links=dto.social_links,
+            athlete_count=dto.athlete_count,
+            coach_count=dto.coach_count,
+            primary_contact_name=dto.primary_contact_name,
+            primary_contact_phone=dto.primary_contact_phone,
         )
+        row = await self._repository.set_sports(academy_id, dto.sport_ids)
         return AcademyMapper.orm_to_entity(row)
 
     async def partial_update(
         self, academy_id: int, dto: AcademyPatchDTO
     ) -> AcademyEntity:
         """PATCH an academy — unset (``None``) fields are left unchanged.
+
+        ``sport_ids`` is only re-set when explicitly provided (non-``None``).
 
         Args:
             academy_id: Primary key of the academy.
@@ -111,11 +155,24 @@ class AcademyUseCases(BaseUseCase):
             The updated ``AcademyEntity``.
 
         Raises:
-            ResourceNotFoundError: No academy exists for ``academy_id``.
+            ResourceNotFoundError: No academy exists, or a sport id is missing.
         """
         await self._get_or_raise(academy_id)
-        fields = {k: v for k, v in dto.to_dict().items() if v is not None}
-        row = await self._repository.partial_update(academy_id, **fields)
+        if dto.sport_ids is not None:
+            await self._validate_sport_ids(dto.sport_ids)
+
+        scalar_fields = {
+            k: v
+            for k, v in dto.to_dict().items()
+            if v is not None and k != "sport_ids"
+        }
+        if scalar_fields:
+            await self._repository.partial_update(academy_id, **scalar_fields)
+
+        if dto.sport_ids is not None:
+            row = await self._repository.set_sports(academy_id, dto.sport_ids)
+        else:
+            row = await self._get_or_raise(academy_id)
         return AcademyMapper.orm_to_entity(row)
 
     async def delete(self, academy_id: int) -> None:

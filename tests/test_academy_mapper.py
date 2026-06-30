@@ -15,16 +15,48 @@ from academies.api.domain.entities.academy import AcademyEntity
 from academies.api.domain.entities.membership import MembershipEntity
 
 
+class _FakeSport:
+    """Minimal stand-in for an ``academies.models.Sport`` row."""
+
+    def __init__(self, id_: int, name: str) -> None:
+        self.id = id_
+        self.name = name
+
+
+class _FakeSportsManager:
+    """Stand-in for the academy's prefetched ``sports`` M2M manager."""
+
+    def __init__(self, sports: list[_FakeSport]) -> None:
+        self._sports = sports
+
+    def all(self) -> list[_FakeSport]:
+        return self._sports
+
+
 class _FakeAcademyRow:
     """Minimal stand-in for an ``academies.models.Academy`` row."""
 
     def __init__(self) -> None:
         self.id = 7
         self.name = "Riverside FC"
-        self.sport = "Football"
+        self.sports = _FakeSportsManager(
+            [_FakeSport(1, "Football"), _FakeSport(2, "Tennis")]
+        )
         self.description = "Youth academy"
         self.city = "Lagos"
         self.status = "active"
+        self.legal_name = "Riverside FC Pvt Ltd"
+        self.address = "12 River Rd"
+        self.email = "info@riverside.example"
+        self.phone = "+15551234567"
+        self.registration_type = "private_limited"
+        self.gst_number = "GST123"
+        self.website = "https://riverside.example"
+        self.social_links = {"instagram": "https://insta.example/riverside"}
+        self.athlete_count = 30
+        self.coach_count = 4
+        self.primary_contact_name = "Coach Ada"
+        self.primary_contact_phone = "+15559876543"
         self.created_by_id = 99
         self.created_at = datetime(2026, 1, 1, tzinfo=UTC)
         self.updated_at = datetime(2026, 1, 2, tzinfo=UTC)
@@ -50,15 +82,29 @@ def test_academy_mapper_round_trip() -> None:
     assert entity.id == 7
     assert entity.created_by == 99
 
+    assert [s.id for s in entity.sports] == [1, 2]
+
     dto = AcademyMapper.entity_to_dto(entity)
     assert dto.name == "Riverside FC"
 
     response = AcademyMapper.dto_to_response(dto)
     assert response["id"] == 7
     assert response["name"] == "Riverside FC"
-    assert response["sport"] == "Football"
+    assert response["sports"] == [
+        {"id": 1, "name": "Football"},
+        {"id": 2, "name": "Tennis"},
+    ]
     assert response["status"] == "active"
     assert response["created_by"] == 99
+    # Registration fields round-trip through the mapper.
+    assert response["legal_name"] == "Riverside FC Pvt Ltd"
+    assert response["registration_type"] == "private_limited"
+    assert response["athlete_count"] == 30
+    assert response["coach_count"] == 4
+    assert response["social_links"] == {
+        "instagram": "https://insta.example/riverside"
+    }
+    assert response["primary_contact_phone"] == "+15559876543"
 
 
 def test_academy_mapper_orm_to_entity_does_not_leak_orm() -> None:

@@ -26,6 +26,27 @@ from common.exceptions.exceptions import (
 )
 
 
+class _FakeSport:
+    """Stand-in for a ``Sport`` row."""
+
+    def __init__(self, id_: int, name: str) -> None:
+        self.id = id_
+        self.name = name
+
+
+class _FakeSportsManager:
+    """Stand-in for the prefetched ``sports`` M2M manager."""
+
+    def __init__(self) -> None:
+        self._sports: list[_FakeSport] = []
+
+    def set(self, sports: list[_FakeSport]) -> None:
+        self._sports = sports
+
+    def all(self) -> list[_FakeSport]:
+        return self._sports
+
+
 class _Row:
     """Mutable attribute bag standing in for an ORM row."""
 
@@ -33,12 +54,19 @@ class _Row:
         now = datetime(2026, 1, 1, tzinfo=UTC)
         self.created_at = now
         self.updated_at = now
+        self.sports = _FakeSportsManager()
         for k, v in kwargs.items():
             setattr(self, k, v)
 
 
 class _FakeAcademyRepo:
-    """Fake ``IAcademyRepository`` keeping academy rows in a dict."""
+    """Fake ``IAcademyRepository`` keeping academy rows in a dict.
+
+    Knows about a fixed catalogue of sports (ids 1, 2, 3) so the use case's
+    validation can be exercised.
+    """
+
+    SPORTS = {1: "Football", 2: "Tennis", 3: "Basketball"}
 
     def __init__(self) -> None:
         self.rows: dict[int, _Row] = {}
@@ -70,6 +98,14 @@ class _FakeAcademyRepo:
 
     async def count(self, **filters) -> int:
         return len(self.rows)
+
+    async def existing_sport_ids(self, sport_ids: list[int]) -> set[int]:
+        return {sid for sid in sport_ids if sid in self.SPORTS}
+
+    async def set_sports(self, id_: int, sport_ids: list[int]):
+        row = self.rows[id_]
+        row.sports.set([_FakeSport(sid, self.SPORTS[sid]) for sid in sport_ids])
+        return row
 
 
 class _FakeMembershipRepo:
@@ -121,22 +157,36 @@ async def test_academy_create_get_patch_delete() -> None:
     uc = AcademyUseCases(_FakeAcademyRepo())
 
     created = await uc.create(
-        AcademyCreateDTO(name="A", sport="Tennis", created_by=5)
+        AcademyCreateDTO(name="A", created_by=5, sport_ids=[1, 2])
     )
     assert created.id == 1
     assert created.status == "active"
     assert created.created_by == 5
+    assert {s.id for s in created.sports} == {1, 2}
 
     fetched = await uc.get(1)
     assert fetched.name == "A"
+    assert {s.id for s in fetched.sports} == {1, 2}
 
+    # PATCH only the city — sports are left unchanged.
     patched = await uc.partial_update(1, AcademyPatchDTO(city="Abuja"))
     assert patched.city == "Abuja"
-    assert patched.sport == "Tennis"  # unchanged
+    assert {s.id for s in patched.sports} == {1, 2}  # unchanged
+
+    # PATCH the sports set explicitly.
+    re_sported = await uc.partial_update(1, AcademyPatchDTO(sport_ids=[3]))
+    assert {s.id for s in re_sported.sports} == {3}
 
     await uc.delete(1)
     with pytest.raises(ResourceNotFoundError):
         await uc.get(1)
+
+
+async def test_academy_create_with_missing_sport_raises() -> None:
+    """Creating with a non-existent sport id raises ``ResourceNotFoundError``."""
+    uc = AcademyUseCases(_FakeAcademyRepo())
+    with pytest.raises(ResourceNotFoundError):
+        await uc.create(AcademyCreateDTO(name="A", created_by=5, sport_ids=[1, 999]))
 
 
 async def test_academy_get_missing_raises() -> None:

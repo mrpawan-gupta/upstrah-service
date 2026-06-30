@@ -1,8 +1,9 @@
 """Django ORM models for the academies app.
 
-Defines :class:`Academy` (a sports academy owned by a creating user) and
-:class:`Membership` (a user's application to an academy, transitioning
-``pending → approved/rejected``). Both extend
+Defines :class:`Sport` (a trainable discipline), :class:`Academy` (a sports
+academy owned by a creating user, training one or more :class:`Sport` via a
+M2M) and :class:`Membership` (a user's application to an academy,
+transitioning ``pending → approved/rejected``). All extend
 :class:`common.models.TimeStampModel` for ``created_at`` / ``updated_at``
 and lifecycle hooks. Foreign keys to ``AUTH_USER_MODEL`` are local
 in-service references (the no-cross-service-FK rule applies to *other*
@@ -15,26 +16,68 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from phonenumber_field.modelfields import PhoneNumberField
 
-from academies.constants import AcademyStatus, MembershipRole, MembershipStatus
+from academies.constants import (
+    AcademyStatus,
+    MembershipRole,
+    MembershipStatus,
+    RegistrationType,
+)
 from common.models import TimeStampModel
+
+
+class Sport(TimeStampModel):
+    """A trainable sport/discipline an academy can offer.
+
+    Attributes:
+        name:      Unique display name of the sport.
+        is_active: Whether the sport is selectable (default ``True``).
+    """
+
+    name = models.CharField(max_length=100, unique=True, verbose_name=_("Name"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+
+    class Meta:
+        verbose_name = _("Sport")
+        verbose_name_plural = _("Sports")
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Academy(TimeStampModel):
     """A sports academy owned by the user that created it.
 
     Attributes:
-        name:        Display name of the academy.
-        sport:       Primary sport the academy trains.
-        description: Optional free-text description.
-        city:        Optional city the academy operates in.
-        status:      ``active`` (default) or ``inactive``.
-        created_by:  Owning :class:`accounts.User`; protected from delete
-            so an academy is never orphaned.
+        name:                  Display name of the academy.
+        sports:                The :class:`Sport` disciplines trained (M2M).
+        description:           Optional free-text description.
+        city:                  Optional city the academy operates in.
+        status:                ``active`` (default) or ``inactive``.
+        legal_name:            Registered legal entity name.
+        address:              Full postal address.
+        email:                 Contact email.
+        phone:                 Contact phone (E.164).
+        registration_type:     Legal registration type.
+        gst_number:            GST registration number.
+        website:               Public website URL.
+        social_links:          Map of ``{platform: url}``.
+        athlete_count:         Self-reported number of athletes.
+        coach_count:           Self-reported number of coaches.
+        primary_contact_name:  Primary contact person's name.
+        primary_contact_phone: Primary contact person's phone (E.164).
+        created_by:            Owning :class:`accounts.User`; protected from
+            delete so an academy is never orphaned.
     """
 
     name = models.CharField(max_length=255, verbose_name=_("Name"))
-    sport = models.CharField(max_length=100, verbose_name=_("Sport"))
+    sports = models.ManyToManyField(
+        Sport,
+        related_name="academies",
+        blank=True,
+        verbose_name=_("Sports"),
+    )
     description = models.TextField(blank=True, verbose_name=_("Description"))
     city = models.CharField(max_length=120, blank=True, verbose_name=_("City"))
     status = models.CharField(
@@ -42,6 +85,37 @@ class Academy(TimeStampModel):
         choices=AcademyStatus.choices,
         default=AcademyStatus.ACTIVE,
         verbose_name=_("Status"),
+    )
+    legal_name = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Legal Name")
+    )
+    address = models.TextField(blank=True, verbose_name=_("Address"))
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    phone = PhoneNumberField(blank=True, verbose_name=_("Phone"))
+    registration_type = models.CharField(
+        max_length=32,
+        choices=RegistrationType.choices,
+        blank=True,
+        verbose_name=_("Registration Type"),
+    )
+    gst_number = models.CharField(
+        max_length=20, blank=True, verbose_name=_("GST Number")
+    )
+    website = models.URLField(blank=True, verbose_name=_("Website"))
+    social_links = models.JSONField(
+        default=dict, blank=True, verbose_name=_("Social Links")
+    )
+    athlete_count = models.PositiveIntegerField(
+        default=0, verbose_name=_("Athlete Count")
+    )
+    coach_count = models.PositiveIntegerField(
+        default=0, verbose_name=_("Coach Count")
+    )
+    primary_contact_name = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Primary Contact Name")
+    )
+    primary_contact_phone = PhoneNumberField(
+        blank=True, verbose_name=_("Primary Contact Phone")
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

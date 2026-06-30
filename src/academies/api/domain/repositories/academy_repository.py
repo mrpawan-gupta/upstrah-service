@@ -2,8 +2,10 @@
 
 Declares the base CRUD slots the academy use case relies on (``get`` /
 ``create`` / ``update`` / ``partial_update`` / ``delete`` / ``list`` /
-``count``, returning raw ORM rows typed as ``Any``). Pure ``abc.ABC`` with
-no Django import; the concrete implementation pairs this contract with
+``count``, returning raw ORM rows typed as ``Any``) plus the M2M helpers
+``existing_sport_ids`` (for validation) and ``set_sports`` (to assign the
+sports relation on a saved row). Pure ``abc.ABC`` with no Django import;
+the concrete implementation pairs this contract with
 :class:`common.api.BaseRepository`.
 """
 
@@ -18,7 +20,7 @@ class IAcademyRepository(ABC):
 
     @abstractmethod
     async def get(self, id_: int) -> Any | None:
-        """Return the academy row for the given primary key, or ``None``."""
+        """Return the academy row (with sports prefetched) for ``id_``, or ``None``."""
 
     @abstractmethod
     async def create(self, **fields: Any) -> Any:
@@ -45,8 +47,31 @@ class IAcademyRepository(ABC):
         order_by: list[str] | None = None,
         **filters: Any,
     ) -> list[Any]:
-        """Return an offset-paginated page of academy rows."""
+        """Return an offset-paginated page of academy rows (sports prefetched)."""
 
     @abstractmethod
     async def count(self, **filters: Any) -> int:
         """Return the number of academy rows matching ``filters``."""
+
+    @abstractmethod
+    async def existing_sport_ids(self, sport_ids: list[int]) -> set[int]:
+        """Return the subset of ``sport_ids`` that exist as ``Sport`` rows.
+
+        Args:
+            sport_ids: Candidate sport PKs to check.
+
+        Returns:
+            The set of PKs from ``sport_ids`` that match an existing row.
+        """
+
+    @abstractmethod
+    async def set_sports(self, id_: int, sport_ids: list[int]) -> Any:
+        """Replace the academy's sports M2M with ``sport_ids`` and return the row.
+
+        Args:
+            id_:       Primary key of the (already saved) academy.
+            sport_ids: PKs of the sports to assign.
+
+        Returns:
+            The academy row re-fetched with ``sports`` prefetched.
+        """

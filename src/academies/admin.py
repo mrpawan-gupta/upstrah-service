@@ -2,7 +2,15 @@
 
 from django.contrib import admin
 
-from academies.models import Academy, Membership
+from academies.models import Academy, Membership, Sport
 
-admin.site.register(Academy)
+
+@admin.register(Academy)
+class AcademyAdmin(admin.ModelAdmin):
+    """Admin for :class:`academies.models.Academy`."""
+
+    filter_horizontal = ("sports",)
+
+
+admin.site.register(Sport)
 admin.site.register(Membership)

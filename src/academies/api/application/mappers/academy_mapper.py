@@ -1,9 +1,10 @@
 """Mapper for the Academy aggregate.
 
-Converts the ``Academy`` ORM row to the domain entity, the entity to the
-response DTO, the response DTO to a response dict, and the request schemas
-to write DTOs. ``orm_to_entity`` returns a frozen ``AcademyEntity`` (no ORM
-leak); ``model_dump()`` is confined to ``dto_to_response``.
+Converts the ``Academy`` ORM row to the domain entity (reading the
+prefetched ``sports`` relation), the entity to the response DTO, the
+response DTO to a response dict, and the request schemas to write DTOs
+carrying ``sport_ids``. ``orm_to_entity`` returns a frozen ``AcademyEntity``
+(no ORM leak); ``model_dump()`` is confined to ``dto_to_response``.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from academies.api.application.dtos.academy_dtos import (
     AcademyResponseDTO,
     AcademyUpdateDTO,
 )
-from academies.api.domain.entities.academy import AcademyEntity
+from academies.api.domain.entities.academy import AcademyEntity, SportRef
 from academies.api.presentation.schemas.academy_schemas import (
     AcademyCreateSchema,
     AcademyPatchSchema,
@@ -32,19 +33,40 @@ class AcademyMapper:
     def orm_to_entity(orm: Any) -> AcademyEntity:
         """Convert an ``Academy`` ORM instance to a frozen domain entity.
 
+        Reads the already-prefetched ``sports`` relation (the repository
+        prefetches it) into a tuple of frozen :class:`SportRef` value
+        objects so no ORM object escapes this boundary.
+
         Args:
-            orm: ``Academy`` ORM row.
+            orm: ``Academy`` ORM row with ``sports`` prefetched.
 
         Returns:
             ``AcademyEntity`` domain object.
         """
+        sports = tuple(
+            SportRef(id=s.id, name=s.name) for s in orm.sports.all()
+        )
         return AcademyEntity(
             id=orm.id,
             name=orm.name,
-            sport=orm.sport,
+            sports=sports,
             description=orm.description,
             city=orm.city,
             status=orm.status,
+            legal_name=orm.legal_name,
+            address=orm.address,
+            email=orm.email,
+            phone=str(orm.phone) if orm.phone else "",
+            registration_type=orm.registration_type,
+            gst_number=orm.gst_number,
+            website=orm.website,
+            social_links=orm.social_links or {},
+            athlete_count=orm.athlete_count,
+            coach_count=orm.coach_count,
+            primary_contact_name=orm.primary_contact_name,
+            primary_contact_phone=(
+                str(orm.primary_contact_phone) if orm.primary_contact_phone else ""
+            ),
             created_by=orm.created_by_id,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
@@ -58,15 +80,27 @@ class AcademyMapper:
             entity: Domain entity returned by a use case.
 
         Returns:
-            ``AcademyResponseDTO`` carrying the same scalar fields.
+            ``AcademyResponseDTO`` carrying the same fields.
         """
         return AcademyResponseDTO(
             id=entity.id,
             name=entity.name,
-            sport=entity.sport,
+            sports=list(entity.sports),
             description=entity.description,
             city=entity.city,
             status=entity.status,
+            legal_name=entity.legal_name,
+            address=entity.address,
+            email=entity.email,
+            phone=entity.phone,
+            registration_type=entity.registration_type,
+            gst_number=entity.gst_number,
+            website=entity.website,
+            social_links=entity.social_links,
+            athlete_count=entity.athlete_count,
+            coach_count=entity.coach_count,
+            primary_contact_name=entity.primary_contact_name,
+            primary_contact_phone=entity.primary_contact_phone,
             created_by=entity.created_by,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
@@ -107,11 +141,23 @@ class AcademyMapper:
         """
         return AcademyCreateDTO(
             name=schema.name,
-            sport=schema.sport,
             created_by=created_by,
+            sport_ids=list(schema.sport_ids),
             description=schema.description,
             city=schema.city,
             status=schema.status,
+            legal_name=schema.legal_name,
+            address=schema.address,
+            email=schema.email,
+            phone=schema.phone,
+            registration_type=schema.registration_type,
+            gst_number=schema.gst_number,
+            website=schema.website,
+            social_links=dict(schema.social_links),
+            athlete_count=schema.athlete_count,
+            coach_count=schema.coach_count,
+            primary_contact_name=schema.primary_contact_name,
+            primary_contact_phone=schema.primary_contact_phone,
         )
 
     @staticmethod
@@ -119,10 +165,22 @@ class AcademyMapper:
         """Convert an ``AcademyUpdateSchema`` (PUT) to an ``AcademyUpdateDTO``."""
         return AcademyUpdateDTO(
             name=schema.name,
-            sport=schema.sport,
+            sport_ids=list(schema.sport_ids),
             description=schema.description,
             city=schema.city,
             status=schema.status,
+            legal_name=schema.legal_name,
+            address=schema.address,
+            email=schema.email,
+            phone=schema.phone,
+            registration_type=schema.registration_type,
+            gst_number=schema.gst_number,
+            website=schema.website,
+            social_links=dict(schema.social_links),
+            athlete_count=schema.athlete_count,
+            coach_count=schema.coach_count,
+            primary_contact_name=schema.primary_contact_name,
+            primary_contact_phone=schema.primary_contact_phone,
         )
 
     @staticmethod
@@ -133,8 +191,20 @@ class AcademyMapper:
         """
         return AcademyPatchDTO(
             name=schema.name,
-            sport=schema.sport,
+            sport_ids=schema.sport_ids,
             description=schema.description,
             city=schema.city,
             status=schema.status,
+            legal_name=schema.legal_name,
+            address=schema.address,
+            email=schema.email,
+            phone=schema.phone,
+            registration_type=schema.registration_type,
+            gst_number=schema.gst_number,
+            website=schema.website,
+            social_links=schema.social_links,
+            athlete_count=schema.athlete_count,
+            coach_count=schema.coach_count,
+            primary_contact_name=schema.primary_contact_name,
+            primary_contact_phone=schema.primary_contact_phone,
         )

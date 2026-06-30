@@ -12,6 +12,7 @@ from academies.api.presentation.schemas.academy_schemas import (
     AcademyPatchSchema,
     AcademyResponseSchema,
     AcademyUpdateSchema,
+    SportSchema,
 )
 from academies.api.presentation.schemas.membership_schemas import (
     MembershipCreateSchema,
@@ -25,4 +26,5 @@ __all__ = [
     "AcademyUpdateSchema",
     "MembershipCreateSchema",
     "MembershipResponseSchema",
+    "SportSchema",
 ]

@@ -18,6 +18,17 @@ class AcademyStatus(models.TextChoices):
     INACTIVE = "inactive", _("Inactive")
 
 
+class RegistrationType(models.TextChoices):
+    """Legal registration type of an :class:`academies.models.Academy`."""
+
+    PROPRIETORSHIP = "proprietorship", _("Proprietorship")
+    PARTNERSHIP = "partnership", _("Partnership")
+    PRIVATE_LIMITED = "private_limited", _("Private Limited")
+    TRUST = "trust", _("Trust")
+    SOCIETY = "society", _("Society")
+    OTHER = "other", _("Other")
+
+
 class MembershipRole(models.TextChoices):
     """Role a member holds within an academy."""
 
